@@ -4,19 +4,20 @@ import os
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-st.title('Análise Manual de Propostas de Crédito Habitação')
+st.title('Análise de Propostas de Crédito Habitação')
 
-# Inicializar variáveis de sessão
-if 'propostas' not in st.session_state:
-    st.session_state['propostas'] = []
 if 'processo' not in st.session_state:
     st.session_state['processo'] = None
+if 'situacao_atual' not in st.session_state:
+    st.session_state['situacao_atual'] = None
+if 'propostas' not in st.session_state:
+    st.session_state['propostas'] = []
+if 'mais_propostas' not in st.session_state:
+    st.session_state['mais_propostas'] = True
 if 'dor' not in st.session_state:
     st.session_state['dor'] = None
-if 'situacao_atual' not in st.session_state:
-    st.session_state['situacao_atual'] = {}
 
-# 1. Seleção do tipo de processo
+# 1. Perguntar tipo de processo
 if not st.session_state['processo']:
     st.subheader("Tipo de processo")
     processo = st.selectbox(
@@ -33,154 +34,164 @@ if not st.session_state['processo']:
         st.rerun()
     st.stop()
 
-# 2. Se for transferência, pedir dados da situação atual
-if st.session_state['processo'] in ["Transferência de crédito habitação", "Transferência de crédito habitação com reforço"] and not st.session_state['situacao_atual']:
+# 2. Perguntar situação atual se aplicável
+if st.session_state['processo'] == "Transferência de crédito habitação" and not st.session_state['situacao_atual']:
     with st.form("situacao_atual"):
         st.subheader("Situação atual")
-        valor_financiamento = st.text_input("Valor de financiamento atual (€)")
-        prazo_atual = st.text_input("Prazo restante (meses)")
-        tipo_taxa = st.text_input("Tipo de taxa")
-        valor_avaliacao = st.text_input("Valor de avaliação do imóvel (€)")
-        tan_atual = st.text_input("TAN bonificada atual (%)")
-        prestacao_atual = st.text_input("Prestação atual com seguros (€)")
-        seguro_vida_atual = st.text_input("Valor do seguro de vida (€)")
-        seguro_multi_atual = st.text_input("Valor do seguro multirriscos do imóvel (€)")
-        valor_outros_creditos = st.text_input("Valor em dívida noutros créditos (€)")
-        prestacoes_outros_creditos = st.text_input("Prestações mensais de outros créditos (€)")
-        submeter_situacao = st.form_submit_button("Guardar situação atual")
-    if submeter_situacao:
+        financiamento = st.text_input("Valor de financiamento (€)")
+        prazo = st.text_input("Prazo em meses")
+        seguros = st.text_input("Seguros (vida e/ou multirriscos, no banco ou fora)")
+        prestacao = st.text_input("Prestação com seguros (€)")
+        submeter = st.form_submit_button("Guardar situação atual")
+    if submeter:
         st.session_state['situacao_atual'] = {
-            'valor_financiamento': valor_financiamento,
-            'prazo_atual': prazo_atual,
-            'tipo_taxa': tipo_taxa,
-            'valor_avaliacao': valor_avaliacao,
-            'tan_atual': tan_atual,
-            'prestacao_atual': prestacao_atual,
-            'seguro_vida_atual': seguro_vida_atual,
-            'seguro_multi_atual': seguro_multi_atual,
-            'valor_outros_creditos': valor_outros_creditos,
-            'prestacoes_outros_creditos': prestacoes_outros_creditos
+            "Valor de financiamento": financiamento,
+            "Prazo em meses": prazo,
+            "Seguros": seguros,
+            "Prestação com seguros": prestacao
         }
         st.rerun()
     st.stop()
 
-# 3. Adição de propostas de acordo com o tipo de processo
-with st.form(key='formulario_banco'):
-    st.subheader(f"Proposta {len(st.session_state['propostas']) + 1}")
-    banco = st.text_input("Nome do banco", key=f"banco{len(st.session_state['propostas'])}")
-    montante = st.text_input("Montante financiado (€)", key=f"montante{len(st.session_state['propostas'])}")
-    prazo = st.text_input("Prazo (meses)", key=f"prazo{len(st.session_state['propostas'])}")
-    valor_avaliacao = st.text_input("Valor mínimo de avaliação (€)", key=f"aval{len(st.session_state['propostas'])}")
-    tipo_taxa = st.text_input("Tipo de taxa", key=f"taxa{len(st.session_state['propostas'])}")
-    tan = st.text_input("TAN bonificada (%)", key=f"tan{len(st.session_state['propostas'])}")
-    # Campos para reforço
-    valor_reforco = ""
-    prazo_reforco = ""
-    if st.session_state['processo'] in ["Transferência de crédito habitação com reforço", "Crédito novo com reforço"]:
-        valor_reforco = st.text_input("Valor de reforço (€)", key=f"reforco{len(st.session_state['propostas'])}")
-        prazo_reforco = st.text_input("Prazo do reforço (meses)", key=f"prazo_reforco{len(st.session_state['propostas'])}")
-    # Seguros com escolha dentro/fora do banco
-    seguro_vida = st.text_input("Seguro de Vida (€ e se é dentro/fora do banco)", key=f"vida{len(st.session_state['propostas'])}")
-    seguro_multi = st.text_input("Seguro Multirriscos (€ e se é dentro/fora do banco)", key=f"multi{len(st.session_state['propostas'])}")
-    # Prestação e custos
-    if st.session_state['processo'] in ["Transferência de crédito habitação com reforço", "Crédito novo com reforço"]:
-        prestacao = st.text_input("Total de prestações com seguros (€)", key=f"prestacao{len(st.session_state['propostas'])}")
-    else:
-        prestacao = st.text_input("Prestação com seguros (€)", key=f"prestacao{len(st.session_state['propostas'])}")
-    custos = st.text_input("Custos associados (€)", key=f"custos{len(st.session_state['propostas'])}")
-    adicionar = st.form_submit_button("Adicionar proposta")
+if st.session_state['processo'] == "Transferência de crédito habitação com reforço" and not st.session_state['situacao_atual']:
+    with st.form("situacao_atual"):
+        st.subheader("Situação atual")
+        financiamento = st.text_input("Valor de financiamento (€)")
+        prazo = st.text_input("Prazo em meses")
+        seguros = st.text_input("Seguros (vida e/ou multirriscos, no banco ou fora)")
+        prestacao = st.text_input("Prestação com seguros (€)")
+        valor_outros_creditos = st.text_input("Valor com outros créditos (€)")
+        prestacoes_outros_creditos = st.text_input("Prestações com outros créditos (€)")
+        submeter = st.form_submit_button("Guardar situação atual")
+    if submeter:
+        st.session_state['situacao_atual'] = {
+            "Valor de financiamento": financiamento,
+            "Prazo em meses": prazo,
+            "Seguros": seguros,
+            "Prestação com seguros": prestacao,
+            "Valor com outros créditos": valor_outros_creditos,
+            "Prestações com outros créditos": prestacoes_outros_creditos
+        }
+        st.rerun()
+    st.stop()
 
-if adicionar:
-    st.session_state['propostas'].append({
-        'banco': banco,
-        'montante': montante,
-        'prazo': prazo,
-        'valor_avaliacao': valor_avaliacao,
-        'tipo_taxa': tipo_taxa,
-        'tan': tan,
-        'valor_reforco': valor_reforco,
-        'prazo_reforco': prazo_reforco,
-        'seguro_vida': seguro_vida,
-        'seguro_multi': seguro_multi,
-        'prestacao': prestacao,
-        'custos': custos
-    })
-    st.rerun()
+# 3. Adicionar propostas
+if st.session_state['mais_propostas']:
+    with st.form(key="adicionar_proposta"):
+        st.subheader(f"Adicionar proposta {len(st.session_state['propostas'])+1}")
+        banco = st.text_input("Nome do banco", key=f"banco{len(st.session_state['propostas'])}")
+        financiamento = st.text_input("Valor de financiamento (€)", key=f"financiamento{len(st.session_state['propostas'])}")
+        prazo = st.text_input("Prazo em meses", key=f"prazo{len(st.session_state['propostas'])}")
+        
+        # Campos por tipo de processo
+        if st.session_state['processo'] in [
+            "Transferência de crédito habitação com reforço", 
+            "Crédito novo com reforço"
+        ]:
+            valor_reforco = st.text_input("Valor de reforço (€)", key=f"reforco{len(st.session_state['propostas'])}")
+            valor_seguros = st.text_input("Valor de seguros (€)", key=f"seguros{len(st.session_state['propostas'])}")
+            prestacao_total = st.text_input("Total de prestações com seguros (€)", key=f"prestacaototal{len(st.session_state['propostas'])}")
+            custos = st.text_input("Custos associados (€)", key=f"custos{len(st.session_state['propostas'])}")
+        else:
+            prestacao = st.text_input("Prestação com seguros (€)", key=f"prestacao{len(st.session_state['propostas'])}")
+            custos = st.text_input("Custos associados (€)", key=f"custos{len(st.session_state['propostas'])}")
 
-# 4. Mostra propostas adicionadas e pergunta pela dor do cliente (só 1x)
-if st.session_state['propostas']:
-    st.subheader("Propostas adicionadas")
-    for idx, prop in enumerate(st.session_state['propostas']):
-        st.markdown(
-            f"""
-            **Proposta {idx+1}: {prop['banco']}**
-            - Montante financiado: {prop['montante']}
-            - Prazo: {prop['prazo']} meses / {round(float(prop['prazo'])/12, 1) if prop['prazo'].replace(' ','').isdigit() else 'N/A'} anos
-            - Valor mínimo de avaliação: {prop['valor_avaliacao']}
-            - Tipo de taxa: {prop['tipo_taxa']}
-            - TAN bonificada: {prop['tan']}
-            - Valor de reforço: {prop['valor_reforco']}
-            - Prazo do reforço: {prop['prazo_reforco']}
-            - Seguro de vida: {prop['seguro_vida']}
-            - Seguro multirriscos: {prop['seguro_multi']}
-            - Prestação: {prop['prestacao']}
-            - Custos associados: {prop['custos']}
-            """
+        adicionar = st.form_submit_button("Adicionar proposta")
+
+    if adicionar:
+        if st.session_state['processo'] in [
+            "Transferência de crédito habitação com reforço", 
+            "Crédito novo com reforço"
+        ]:
+            st.session_state['propostas'].append({
+                "Nome do banco": banco,
+                "Valor de financiamento": financiamento,
+                "Prazo em meses": prazo,
+                "Valor de reforço": valor_reforco,
+                "Valor de seguros": valor_seguros,
+                "Total de prestações com seguros": prestacao_total,
+                "Custos associados": custos
+            })
+        else:
+            st.session_state['propostas'].append({
+                "Nome do banco": banco,
+                "Valor de financiamento": financiamento,
+                "Prazo em meses": prazo,
+                "Prestação com seguros": prestacao,
+                "Custos associados": custos
+            })
+        st.rerun()
+
+    if st.session_state['propostas']:
+        st.markdown("#### Propostas já adicionadas:")
+        for idx, p in enumerate(st.session_state['propostas']):
+            st.write(f"Proposta {idx+1}: {p}")
+        mais = st.radio(
+            "Queres adicionar mais alguma proposta?",
+            ("Sim", "Não"),
+            key=f"mais_propostas_radio_{len(st.session_state['propostas'])}"
         )
-    if not st.session_state['dor']:
-        st.subheader("Qual a principal razão que levou o cliente a recorrer aos nossos serviços?")
-        dor = st.selectbox(
-            "Seleciona a principal dor:",
-            [
-                "Preço",
-                "Juntar vários créditos",
-                "Valor mais alto de financiamento",
-                "Seguros fora do banco",
-                "Apenas mudar de banco",
-                "Pedir valor de reforço"
-            ]
-        )
-        if st.button("Confirmar dor do cliente"):
-            st.session_state['dor'] = dor
+        if mais == "Não":
+            st.session_state['mais_propostas'] = False
             st.rerun()
+        # Se sim, deixa continuar o ciclo normalmente
 
-# 5. Análise com IA (só mostra botão se já houver propostas E dor definida)
-if st.session_state['propostas'] and st.session_state['dor']:
+# 4. Perguntar dor do cliente
+if not st.session_state['mais_propostas'] and not st.session_state['dor']:
+    st.subheader("Motivo principal do cliente")
+    dor = st.selectbox(
+        "Qual a principal razão que levou o cliente a recorrer aos nossos serviços?",
+        [
+            "Preço",
+            "Juntar vários créditos",
+            "Valor mais alto de financiamento",
+            "Seguros fora do banco",
+            "Apenas mudar de banco",
+            "Pedir valor de reforço"
+        ]
+    )
+    if st.button("Confirmar motivo principal"):
+        st.session_state['dor'] = dor
+        st.rerun()
+    st.stop()
+
+# 5. Montar o prompt final e chamar a IA
+if not st.session_state['mais_propostas'] and st.session_state['dor']:
+    prompt = "Atua como um especialista em crédito habitação.\n\n"
+    prompt += f"1. O processo é: {st.session_state['processo']}\n\n"
+
+    # Situação atual se existir
+    if st.session_state['situacao_atual']:
+        prompt += "2. Situação atual:\n"
+        for k, v in st.session_state['situacao_atual'].items():
+            prompt += f"- {k}: {v}\n"
+        prompt += "\n"
+
+    prompt += "3. Propostas apresentadas:\n"
+    for idx, p in enumerate(st.session_state['propostas']):
+        prompt += f"Proposta {idx+1}:\n"
+        for k, v in p.items():
+            prompt += f"- {k}: {v}\n"
+        prompt += "\n"
+
+    prompt += f"4. Motivo principal que levou o cliente a procurar os nossos serviços: {st.session_state['dor']}\n\n"
+    prompt += "---\n\n"
+    prompt += "Análise:\n"
+    prompt += "- Resume as condições de cada proposta e destaca as vantagens principais.\n"
+    prompt += "- Compara as propostas apresentadas entre si, tendo em conta o motivo principal do cliente.\n"
+    if st.session_state['processo'] in [
+        "Transferência de crédito habitação", 
+        "Transferência de crédito habitação com reforço"
+    ]:
+        prompt += "- Se o processo for transferência, analisa a poupança gerada entre a prestação com seguros das novas propostas e a situação atual.\n"
+    prompt += "- Recomenda a proposta mais vantajosa para o objetivo do cliente, explicando porquê.\n"
+    prompt += "- Dá sugestões para rebater possíveis objeções que possam surgir na apresentação da solução (por exemplo: custos iniciais, diferença de valor dos seguros, vantagens da mudança, etc.).\n\n"
+    prompt += 'Termina SEMPRE com este texto:\n"Fico ao dispor para qualquer esclarecimento adicional ou para avançarmos com os próximos passos. 😊"\n'
+
+    st.subheader("Prompt para IA (pré-visualização)")
+    st.code(prompt)
+
     if st.button("Analisar propostas com IA"):
-        prompt = f"""
-        Atua como um especialista em crédito habitação.
-        Tipo de processo: {st.session_state['processo']}
-        Dor do cliente: {st.session_state['dor']}
-        """
-        if st.session_state['situacao_atual']:
-            prompt += "\nSituação atual do cliente:\n"
-            for k, v in st.session_state['situacao_atual'].items():
-                prompt += f"- {k.replace('_',' ').capitalize()}: {v}\n"
-        prompt += "\nPropostas apresentadas:\n"
-        for idx, prop in enumerate(st.session_state['propostas']):
-            prompt += f"""
-            Proposta {idx+1}: {prop['banco']}
-            - Montante financiado: {prop['montante']}
-            - Prazo: {prop['prazo']} meses / {round(float(prop['prazo'])/12, 1) if prop['prazo'].replace(' ','').isdigit() else 'N/A'} anos
-            - Valor mínimo de avaliação: {prop['valor_avaliacao']}
-            - Tipo de taxa: {prop['tipo_taxa']}
-            - TAN bonificada: {prop['tan']}
-            """
-            if st.session_state['processo'] in ["Transferência de crédito habitação com reforço", "Crédito novo com reforço"]:
-                prompt += f"- Valor de reforço: {prop['valor_reforco']}\n- Prazo do reforço: {prop['prazo_reforco']} meses\n"
-            prompt += f"""- Seguro de vida: {prop['seguro_vida']}
-            - Seguro multirriscos: {prop['seguro_multi']}
-            - Prestação: {prop['prestacao']}
-            - Custos associados: {prop['custos']}
-            """
-
-        prompt += """
-        Analisa as propostas tendo em conta a dor apresentada e recomenda a melhor opção.
-        Resume os principais pontos de cada proposta.
-        Justifica a tua escolha e apresenta argumentos comerciais para defender a solução recomendada, rebatendo possíveis objeções do cliente. Termina com uma frase de incentivo à formalização.
-        Todos os valores monetários devem ser apresentados ao cêntimo, com separador de milhares por espaço e o símbolo € (ex: 2 020,18€). As taxas de juro devem aparecer com três casas decimais e o símbolo % (ex: 2,550%).
-        """
-
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -192,7 +203,3 @@ if st.session_state['propostas'] and st.session_state['dor']:
         )
         st.subheader("Resposta da IA:")
         st.write(response.choices[0].message.content)
-
-    st.write("Queres adicionar outra proposta? Preenche os campos acima e carrega em 'Adicionar proposta'.")
-else:
-    st.info("Adiciona pelo menos uma proposta para análise e indica a principal dor do cliente para continuar.")
