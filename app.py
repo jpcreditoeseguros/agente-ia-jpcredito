@@ -11,16 +11,58 @@ uploaded_file = st.file_uploader("Faz upload do ficheiro Excel (.xlsx)")
 
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
-    sheet = st.selectbox("Escolhe a folha a analisar:", xls.sheet_names, index=xls.sheet_names.index("MAPA COMPARATIVO") if "MAPA COMPARATIVO" in xls.sheet_names else 0)
+    sheet = st.selectbox(
+        "Escolhe a folha a analisar:",
+        xls.sheet_names,
+        index=xls.sheet_names.index("MAPA COMPARATIVO") if "MAPA COMPARATIVO" in xls.sheet_names else 0
+    )
     df = pd.read_excel(uploaded_file, sheet_name=sheet)
     st.write("Primeiras linhas do ficheiro:")
     st.write(df.head())
 
-    prompt = f"""
-    És um especialista em crédito habitação. Analisa esta tabela de propostas e responde ao gestor:
-    {df.head(20).to_string(index=False)}
-    Resumo, tabela comparativa, argumentos e frase de fecho.
-    """
+    # Prompt dinâmico
+    if sheet.lower() == "dados":
+        prompt = f"""
+        Atua como um especialista em crédito habitação.
+        O teu objetivo é preparar uma defesa técnica do processo, para envio ao banco e facilitar a aprovação do crédito.
+        Analisa detalhadamente todos os dados apresentados na tabela (aba 'Dados') e identifica:
+        - Pontos fortes do processo e dos proponentes;
+        - Argumentos que favorecem a aprovação (rendimento, taxa de esforço, estabilidade laboral, garantias, etc.);
+        - Como apresentar o caso para minimizar dúvidas do banco;
+        - Sugere frases de justificação e pontos de destaque para colocar na comunicação ao banco.
+        Utiliza sempre linguagem profissional e segura, como um verdadeiro intermediário de crédito.
+        Tabela de dados:
+        {df.head(20).to_string(index=False)}
+        """
+    else:
+        dor_principal = st.selectbox(
+            "Qual a principal dor do cliente?",
+            [
+                "Preço/prestação",
+                "Juntar vários créditos",
+                "Retirar seguros do banco",
+                "Retirar o ex do crédito",
+                "Pedir liquidez adicional",
+                "Mudar tipo de taxa"
+            ]
+        )
+        prompt = f"""
+        Atua como um especialista em crédito habitação.
+        O teu objetivo é analisar a folha 'Mapa comparativo' e ajudar o gestor a defender as várias propostas junto do cliente.
+        Primeiro, considera que a principal dor do cliente é: **{dor_principal}**.
+        Com base nisto, deves:
+        - Identificar a proposta mais vantajosa para a dor do cliente (p.ex. menor prestação, consolidação, retirar produtos obrigatórios, etc.);
+        - Destacar benefícios claros e tangíveis da proposta escolhida;
+        - Preparar argumentos de defesa para apresentar ao cliente, rebatendo objeções comuns.
+        Se existir uma coluna “Situação Atual”, trata-se de uma transferência de crédito habitação — deves:
+        - Realçar as melhorias e poupança gerada;
+        - Fazer comparação clara entre situação atual e nova(s) proposta(s);
+        - Destacar vantagens que o cliente vai sentir no dia a dia.
+        No final, sugere sempre uma frase de fecho para incentivar o cliente a avançar para a formalização.
+        Usa linguagem simples, convincente e segura.
+        Tabela de dados:
+        {df.head(20).to_string(index=False)}
+        """
 
     if st.button("Obter análise IA"):
         response = openai.chat.completions.create(
