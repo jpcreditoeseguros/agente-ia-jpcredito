@@ -43,6 +43,7 @@ if uploaded_file:
                 "Preço/prestação",
                 "Juntar vários créditos",
                 "Retirar seguros do banco",
+                "Valor de Financiamento mais alto",
                 "Retirar o ex do crédito",
                 "Pedir liquidez adicional",
                 "Mudar tipo de taxa"
@@ -63,16 +64,19 @@ if uploaded_file:
         Usa sempre os campos exatamente como aparecem na tabela seguinte, sem inventar, traduzir ou alterar nomes.
         Para cada banco, responde campo a campo, usando só os dados visíveis.
         Para cada proposta apresentada, responde sempre indicando:
+
         - Nome do banco (exatamente como está na tabela)
-        - Montante financiado
-        - Prazo
-        - Prestação com seguros
-        - Seguros (vida e multirriscos, indica valor e se é dentro ou fora do banco)
-        - TAN bonificada
+        - Montante financiado (apresenta sempre com separador de milhares por espaço, duas casas decimais e o símbolo €, ex: 66 938,00€)
+        - Prazo (apresenta o número de meses E a conversão para anos, ex: 240 meses / 20 anos)
+        - Prestação com seguros (sempre com separador de milhares por espaço, duas casas decimais e €, ex: 1 376,31€)
+        - Seguros (vida e multirriscos, indica valor com separador de milhares por espaço, duas casas decimais e €, e se é dentro ou fora do banco)
+        - TAN bonificada (apresenta sempre como percentagem com **três casas decimais** e o símbolo %, ex: 3,550%)
         - Tipo de taxa
-        - Custos associados (valor total)
+        - Custos associados (valor total com separador de milhares por espaço, duas casas decimais e €, ex: 2 020,18€)
         - Situação atual (se existir)
         Se algum campo não existir, diz “não consta na tabela”.
+
+        Garante que todos os valores monetários são apresentados ao cêntimo (duas casas decimais), com separador de milhares por espaço, e que todas as taxas aparecem como percentagem com **três casas decimais** e o símbolo %.
 
         {comparacao}
 
@@ -91,7 +95,7 @@ if uploaded_file:
                 {"role": "system", "content": "Responder como um gestor de crédito experiente."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=1400,
+            max_tokens=1600,
             temperature=0.2
         )
         st.write("Resposta da IA:")
