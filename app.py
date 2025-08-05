@@ -23,6 +23,25 @@ if uploaded_file:
     colunas = [col.lower() for col in df.columns]
     tem_situacao_atual = any("situação atual" in col for col in colunas)
 
+    # Campos que queres que a IA foque
+    campos_relevantes = [
+        "Montante Financiado",
+        "Prazo",
+        "PRESTAÇÃO COM SEGUROS",
+        "Seguro de Vida Fora do Banco",
+        "Seguro Multirriscos Banco",
+        "TAN Bonificada",
+        "Tipo de taxa",
+        "Total de custos associados",
+        "Situação Atual"
+    ]
+
+    # Filtrar só os campos relevantes (primeira coluna)
+    if sheet.lower() == "mapa comparativo":
+        df_filtrado = df[df[df.columns[0]].isin(campos_relevantes)]
+    else:
+        df_filtrado = df
+
     if sheet.lower() == "dados":
         prompt = f"""
         Atua como um especialista em crédito habitação.
@@ -59,23 +78,21 @@ if uploaded_file:
             """
 
         prompt = f"""
-        Atua como um especialista em crédito habitação.  
-        Usa sempre os títulos exatos das colunas tal como aparecem na tabela.  
+        Atua como um especialista em crédito habitação.
+        Só uses os campos exatamente como aparecem na tabela seguinte.
+        Para cada banco, responde campo a campo, nunca inventes valores ou traduções, nem alteres o nome dos campos.
         Para cada proposta apresentada, responde sempre indicando:
-        - Nome do banco (usa exatamente como está na tabela)
-        - Montante de financiamento proposto (usa o campo correspondente)
-        - Prazo do empréstimo (usa o campo correspondente)
-        - Prestação mensal **com seguros** (usa o campo correspondente ou soma “Prestação sem seguros” + “Seguros” se for esse o caso)
-        - Seguro de vida: valor e onde está contratado (diz sempre se é no banco ou fora, usando os campos exatos da tabela)
-        - Seguro multirriscos: valor e onde está contratado (idem)
-        - Valor total dos seguros (separando seguro de vida e multirriscos se possível)
-        - TAN bonificada (usa o campo correspondente)
-        - Tipo de taxa (usa o campo correspondente)
-        - Valor total dos custos associados com o crédito (usa exatamente o campo da tabela, exemplo: “Total de custos associados”)
-        - Qualquer outro campo relevante que conste na tabela para comparação
+        - Nome do banco (exatamente como está na tabela)
+        - Montante Financiado
+        - Prazo
+        - PRESTAÇÃO COM SEGUROS
+        - Seguro de Vida Fora do Banco
+        - Seguro Multirriscos Banco
+        - TAN Bonificada
+        - Tipo de taxa
+        - Total de custos associados
+        - Situação Atual (se existir, para transferências)
         Se algum destes campos não existir na tabela, escreve “não consta na tabela”.
-
-        Apresenta sempre os valores tal como estão, sem arredondar ou alterar nomes de colunas.
 
         {comparacao}
 
@@ -83,8 +100,8 @@ if uploaded_file:
 
         Termina sempre com uma frase de fecho forte, a incentivar o cliente a avançar para a formalização.
 
-        Tabela de dados:
-        {df.head(20).to_string(index=False)}
+        Tabela de dados (apenas campos essenciais, transposta para facilitar leitura):
+        {df_filtrado.T.to_string()}
         """
 
     if st.button("Obter análise IA"):
@@ -94,7 +111,7 @@ if uploaded_file:
                 {"role": "system", "content": "Responder como um gestor de crédito experiente."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=1200,
+            max_tokens=1400,
             temperature=0.2
         )
         st.write("Resposta da IA:")
