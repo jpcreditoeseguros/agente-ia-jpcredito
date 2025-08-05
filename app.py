@@ -1,98 +1,81 @@
 import streamlit as st
-import pandas as pd
 import openai
 import os
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-st.title('Análise Inteligente de Mapas Comparativos JP Crédito e Seguros')
+st.title('Análise Manual de Propostas de Crédito Habitação')
 
-uploaded_file = st.file_uploader("Faz upload do ficheiro Excel (.xlsx)")
+if 'propostas' not in st.session_state:
+    st.session_state['propostas'] = []
 
-if uploaded_file:
-    xls = pd.ExcelFile(uploaded_file)
-    sheet = st.selectbox(
-        "Escolhe a folha a analisar:",
-        xls.sheet_names,
-        index=xls.sheet_names.index("MAPA COMPARATIVO") if "MAPA COMPARATIVO" in xls.sheet_names else 0
-    )
-    df = pd.read_excel(uploaded_file, sheet_name=sheet)
-    st.write("Primeiras linhas do ficheiro:")
-    st.write(df.head())
+with st.form(key='formulario_banco'):
+    st.subheader(f"Proposta {len(st.session_state['propostas']) + 1}")
+    banco = st.text_input("Nome do banco", key=f"banco{len(st.session_state['propostas'])}")
+    montante = st.text_input("Montante financiado (€)", value="66 938,00€", key=f"montante{len(st.session_state['propostas'])}")
+    prazo = st.text_input("Prazo (meses)", value="240", key=f"prazo{len(st.session_state['propostas'])}")
+    prestacao = st.text_input("Prestação com seguros (€)", value="376,31€", key=f"prestacao{len(st.session_state['propostas'])}")
+    seguro_vida = st.text_input("Seguro de Vida (valor e se é dentro/fora do banco)", value="4,97€ fora do banco", key=f"vida{len(st.session_state['propostas'])}")
+    seguro_multi = st.text_input("Seguro Multirriscos (valor e se é dentro/fora do banco)", value="15,00€ no banco", key=f"multi{len(st.session_state['propostas'])}")
+    tan = st.text_input("TAN bonificada (%)", value="2,550%", key=f"tan{len(st.session_state['propostas'])}")
+    taxa = st.text_input("Tipo de taxa", value="FIXA 3 ANOS", key=f"taxa{len(st.session_state['propostas'])}")
+    custos = st.text_input("Custos associados (€)", value="2 020,18€", key=f"custos{len(st.session_state['propostas'])}")
+    adicionar = st.form_submit_button("Adicionar proposta")
 
-    colunas = [col.lower() for col in df.columns]
-    tem_situacao_atual = any("situação atual" in col for col in colunas)
+if adicionar:
+    st.session_state['propostas'].append({
+        'banco': banco,
+        'montante': montante,
+        'prazo': prazo,
+        'prestacao': prestacao,
+        'seguro_vida': seguro_vida,
+        'seguro_multi': seguro_multi,
+        'tan': tan,
+        'taxa': taxa,
+        'custos': custos
+    })
+    st.experimental_rerun()
 
-    if sheet.lower() == "dados":
-        prompt = f"""
-        Atua como um especialista em crédito habitação.
-        O teu objetivo é preparar uma defesa técnica do processo, para envio ao banco e facilitar a aprovação do crédito.
-        Analisa detalhadamente todos os dados apresentados na tabela (aba 'Dados') e identifica:
-        - Pontos fortes do processo e dos proponentes;
-        - Argumentos que favorecem a aprovação (rendimento, taxa de esforço, estabilidade laboral, garantias, etc.);
-        - Como apresentar o caso para minimizar dúvidas do banco;
-        - Sugere frases de justificação e pontos de destaque para colocar na comunicação ao banco.
-        Utiliza sempre linguagem profissional e segura, como um verdadeiro intermediário de crédito.
-        Tabela de dados:
-        {df.head(20).to_string(index=False)}
-        """
-    else:
-        dor_principal = st.selectbox(
-            "Qual a principal dor do cliente?",
-            [
-                "Preço/prestação",
-                "Juntar vários créditos",
-                "Retirar seguros do banco",
-                "Retirar o ex do crédito",
-                "Pedir liquidez adicional",
-                "Mudar tipo de taxa"
-            ]
+if st.session_state['propostas']:
+    st.subheader("Propostas adicionadas")
+    for idx, prop in enumerate(st.session_state['propostas']):
+        st.markdown(
+            f"""
+            **Proposta {idx+1}: {prop['banco']}**
+            - Montante financiado: {prop['montante']}
+            - Prazo: {prop['prazo']} meses / {round(float(prop['prazo'])/12, 1) if prop['prazo'].replace(' ','').isdigit() else 'N/A'} anos
+            - Prestação com seguros: {prop['prestacao']}
+            - Seguro de vida: {prop['seguro_vida']}
+            - Seguro multirriscos: {prop['seguro_multi']}
+            - TAN bonificada: {prop['tan']}
+            - Tipo de taxa: {prop['taxa']}
+            - Custos associados: {prop['custos']}
+            """
         )
-
-        if tem_situacao_atual:
-            comparacao = """
-            Existe uma coluna “Situação Atual”, por isso deves comparar cada aspeto entre a proposta atual e as novas, e realçar as melhorias e a poupança gerada para o cliente.
-            """
-        else:
-            comparacao = """
-            Não existe coluna “Situação Atual”, por isso não faças referência a transferências. Foca-te em analisar as propostas como novas operações.
-            """
-
+    if st.button("Analisar propostas com IA"):
         prompt = f"""
         Atua como um especialista em crédito habitação.
-        Usa sempre os campos exatamente como aparecem na tabela seguinte, sem inventar, traduzir ou alterar nomes.
-        Para cada banco, responde campo a campo, usando só os dados visíveis.
+        Vais analisar várias propostas detalhadas abaixo.
+        Para cada proposta, faz um resumo dos principais pontos (montante financiado, prazo, prestação com seguros, seguro de vida, seguro multirriscos, TAN bonificada, tipo de taxa, custos associados).
+        Todos os valores monetários devem ser apresentados ao cêntimo, com separador de milhares por espaço e o símbolo € (ex: 2 020,18€). As taxas de juro devem aparecer com três casas decimais e o símbolo % (ex: 2,550%).
+        Compara as propostas entre si e identifica qual a mais vantajosa, explicando porquê.
+        No final, apresenta argumentos comerciais para defender a solução recomendada ao cliente, rebatendo objeções comuns, e termina com uma frase de fecho para incentivar à formalização.
 
-        Para cada proposta apresentada, responde sempre indicando:
-
-        - Nome do banco (exatamente como está na tabela)
-        - Montante financiado (apresenta sempre com separador de milhares por espaço, duas casas decimais e o símbolo €, ex: 66 938,00€)
-        - Prazo (apresenta o número de meses E a conversão para anos, ex: 240 meses / 20 anos)
-        - Prestação com seguros (sempre com separador de milhares por espaço, duas casas decimais e €, ex: 1 376,31€)
-        - Para TODOS os campos de seguros presentes na tabela (como “Seguro de Vida Fora do Banco”, “Seguro Multirriscos Banco”, etc.), apresenta:
-            - O nome exato do campo (não resumas, nem traduzes)
-            - O valor (sempre com separador de milhares por espaço, duas casas decimais e €)
-            - Especifica sempre se é dentro ou fora do banco, conforme o nome do campo
-          NUNCA ignores nem resumas qualquer campo de seguros: apresenta todos os que existirem na tabela, um a um, para cada banco.
-        - TAN bonificada (apresenta sempre como percentagem com três casas decimais e o símbolo %, ex: 3,550%)
-        - Tipo de taxa
-        - Custos associados (valor total com separador de milhares por espaço, duas casas decimais e €, ex: 2 020,18€)
-        - Situação atual (se existir)
-        Se algum campo não existir, diz “não consta na tabela”.
-
-        Garante que todos os valores monetários são apresentados ao cêntimo (duas casas decimais), com separador de milhares por espaço, e que todas as taxas aparecem como percentagem com três casas decimais e o símbolo %.
-
-        {comparacao}
-
-        No final, identifica qual a proposta mais vantajosa para a dor do cliente, prepara argumentos claros para defender essa solução junto do cliente, antecipando e rebatendo objeções comuns.
-
-        Termina sempre com uma frase de fecho forte, a incentivar o cliente a avançar para a formalização.
-
-        Tabela de dados (transposta):
-        {df.T.to_string()}
+        Propostas:
         """
+        for idx, prop in enumerate(st.session_state['propostas']):
+            prompt += f"""
+            Proposta {idx+1}: {prop['banco']}
+            - Montante financiado: {prop['montante']}
+            - Prazo: {prop['prazo']} meses / {round(float(prop['prazo'])/12, 1) if prop['prazo'].replace(' ','').isdigit() else 'N/A'} anos
+            - Prestação com seguros: {prop['prestacao']}
+            - Seguro de vida: {prop['seguro_vida']}
+            - Seguro multirriscos: {prop['seguro_multi']}
+            - TAN bonificada: {prop['tan']}
+            - Tipo de taxa: {prop['taxa']}
+            - Custos associados: {prop['custos']}
+            """
 
-    if st.button("Obter análise IA"):
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -102,5 +85,8 @@ if uploaded_file:
             max_tokens=1800,
             temperature=0.2
         )
-        st.write("Resposta da IA:")
+        st.subheader("Resposta da IA:")
         st.write(response.choices[0].message.content)
+    st.write("Queres adicionar outra proposta? Preenche os campos acima e carrega em 'Adicionar proposta'.")
+else:
+    st.info("Adiciona pelo menos uma proposta para análise.")
