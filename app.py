@@ -30,7 +30,7 @@ if not st.session_state['processo']:
     )
     if st.button("Confirmar tipo de processo"):
         st.session_state['processo'] = processo
-       st.rerun()
+        st.rerun()
     st.stop()
 
 # 2. Se for transferência, pedir dados da situação atual
@@ -61,7 +61,7 @@ if st.session_state['processo'] in ["Transferência de crédito habitação", "T
             'valor_outros_creditos': valor_outros_creditos,
             'prestacoes_outros_creditos': prestacoes_outros_creditos
         }
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # 3. Adição de propostas de acordo com o tipo de processo
@@ -105,7 +105,7 @@ if adicionar:
         'prestacao': prestacao,
         'custos': custos
     })
-    st.experimental_rerun()
+    st.rerun()
 
 # 4. Mostra propostas adicionadas e pergunta pela dor do cliente (só 1x)
 if st.session_state['propostas']:
@@ -142,7 +142,7 @@ if st.session_state['propostas']:
         )
         if st.button("Confirmar dor do cliente"):
             st.session_state['dor'] = dor
-            st.experimental_rerun()
+            st.rerun()
 
 # 5. Análise com IA (só mostra botão se já houver propostas E dor definida)
 if st.session_state['propostas'] and st.session_state['dor']:
@@ -196,4 +196,3 @@ if st.session_state['propostas'] and st.session_state['dor']:
     st.write("Queres adicionar outra proposta? Preenche os campos acima e carrega em 'Adicionar proposta'.")
 else:
     st.info("Adiciona pelo menos uma proposta para análise e indica a principal dor do cliente para continuar.")
-
