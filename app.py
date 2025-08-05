@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import openai
+import os
 
-# Coloca aqui a tua OpenAI API Key
-openai.api_key = "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"
+# Vai buscar a API Key aos Secrets da Streamlit Cloud
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 st.title('Análise Inteligente de Mapas Comparativos JP Crédito e Seguros')
 
@@ -21,12 +22,14 @@ if uploaded_file:
     """
 
     if st.button("Obter análise IA"):
-        resposta = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "system", "content": "Responder como um gestor de crédito experiente."},
-                      {"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": "Responder como um gestor de crédito experiente."},
+                {"role": "user", "content": prompt}
+            ],
             max_tokens=1200,
             temperature=0.2
         )
         st.write("Resposta da IA:")
-        st.write(resposta.choices[0].message.content)
+        st.write(response.choices[0].message.content)
