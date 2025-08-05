@@ -3,7 +3,6 @@ import pandas as pd
 import openai
 import os
 
-# Vai buscar a API Key aos Secrets da Streamlit Cloud
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 st.title('Análise Inteligente de Mapas Comparativos JP Crédito e Seguros')
@@ -11,7 +10,9 @@ st.title('Análise Inteligente de Mapas Comparativos JP Crédito e Seguros')
 uploaded_file = st.file_uploader("Faz upload do ficheiro Excel (.xlsx)")
 
 if uploaded_file:
-    df = pd.read_excel(uploaded_file, sheet_name=0)
+    xls = pd.ExcelFile(uploaded_file)
+    sheet = st.selectbox("Escolhe a folha a analisar:", xls.sheet_names, index=xls.sheet_names.index("MAPA COMPARATIVO") if "MAPA COMPARATIVO" in xls.sheet_names else 0)
+    df = pd.read_excel(uploaded_file, sheet_name=sheet)
     st.write("Primeiras linhas do ficheiro:")
     st.write(df.head())
 
