@@ -12,14 +12,14 @@ if 'propostas' not in st.session_state:
 with st.form(key='formulario_banco'):
     st.subheader(f"Proposta {len(st.session_state['propostas']) + 1}")
     banco = st.text_input("Nome do banco", key=f"banco{len(st.session_state['propostas'])}")
-    montante = st.text_input("Montante financiado (€)", value="66 938,00€", key=f"montante{len(st.session_state['propostas'])}")
-    prazo = st.text_input("Prazo (meses)", value="240", key=f"prazo{len(st.session_state['propostas'])}")
-    prestacao = st.text_input("Prestação com seguros (€)", value="376,31€", key=f"prestacao{len(st.session_state['propostas'])}")
-    seguro_vida = st.text_input("Seguro de Vida (valor e se é dentro/fora do banco)", value="4,97€ fora do banco", key=f"vida{len(st.session_state['propostas'])}")
-    seguro_multi = st.text_input("Seguro Multirriscos (valor e se é dentro/fora do banco)", value="15,00€ no banco", key=f"multi{len(st.session_state['propostas'])}")
-    tan = st.text_input("TAN bonificada (%)", value="2,550%", key=f"tan{len(st.session_state['propostas'])}")
-    taxa = st.text_input("Tipo de taxa", value="FIXA 3 ANOS", key=f"taxa{len(st.session_state['propostas'])}")
-    custos = st.text_input("Custos associados (€)", value="2 020,18€", key=f"custos{len(st.session_state['propostas'])}")
+    montante = st.text_input("Montante financiado (€)", key=f"montante{len(st.session_state['propostas'])}")
+    prazo = st.text_input("Prazo (meses)", key=f"prazo{len(st.session_state['propostas'])}")
+    prestacao = st.text_input("Prestação com seguros (€)", key=f"prestacao{len(st.session_state['propostas'])}")
+    seguro_vida = st.text_input("Seguro de Vida (valor e se é dentro/fora do banco)", key=f"vida{len(st.session_state['propostas'])}")
+    seguro_multi = st.text_input("Seguro Multirriscos (valor e se é dentro/fora do banco)", key=f"multi{len(st.session_state['propostas'])}")
+    tan = st.text_input("TAN bonificada (%)", key=f"tan{len(st.session_state['propostas'])}")
+    taxa = st.text_input("Tipo de taxa", key=f"taxa{len(st.session_state['propostas'])}")
+    custos = st.text_input("Custos associados (€)", key=f"custos{len(st.session_state['propostas'])}")
     adicionar = st.form_submit_button("Adicionar proposta")
 
 if adicionar:
