@@ -23,25 +23,6 @@ if uploaded_file:
     colunas = [col.lower() for col in df.columns]
     tem_situacao_atual = any("situação atual" in col for col in colunas)
 
-    # Campos que queres que a IA foque
-    campos_relevantes = [
-        "Montante Financiado",
-        "Prazo",
-        "PRESTAÇÃO COM SEGUROS",
-        "Seguro de Vida Fora do Banco",
-        "Seguro Multirriscos Banco",
-        "TAN Bonificada",
-        "Tipo de taxa",
-        "Total de custos associados",
-        "Situação Atual"
-    ]
-
-    # Filtrar só os campos relevantes (primeira coluna)
-    if sheet.lower() == "mapa comparativo":
-        df_filtrado = df[df[df.columns[0]].isin(campos_relevantes)]
-    else:
-        df_filtrado = df
-
     if sheet.lower() == "dados":
         prompt = f"""
         Atua como um especialista em crédito habitação.
@@ -79,20 +60,19 @@ if uploaded_file:
 
         prompt = f"""
         Atua como um especialista em crédito habitação.
-        Só uses os campos exatamente como aparecem na tabela seguinte.
-        Para cada banco, responde campo a campo, nunca inventes valores ou traduções, nem alteres o nome dos campos.
+        Usa sempre os campos exatamente como aparecem na tabela seguinte, sem inventar, traduzir ou alterar nomes.
+        Para cada banco, responde campo a campo, usando só os dados visíveis.
         Para cada proposta apresentada, responde sempre indicando:
         - Nome do banco (exatamente como está na tabela)
-        - Montante Financiado
+        - Montante financiado
         - Prazo
-        - PRESTAÇÃO COM SEGUROS
-        - Seguro de Vida Fora do Banco
-        - Seguro Multirriscos Banco
-        - TAN Bonificada
+        - Prestação com seguros
+        - Seguros (vida e multirriscos, indica valor e se é dentro ou fora do banco)
+        - TAN bonificada
         - Tipo de taxa
-        - Total de custos associados
-        - Situação Atual (se existir, para transferências)
-        Se algum destes campos não existir na tabela, escreve “não consta na tabela”.
+        - Custos associados (valor total)
+        - Situação atual (se existir)
+        Se algum campo não existir, diz “não consta na tabela”.
 
         {comparacao}
 
@@ -100,8 +80,8 @@ if uploaded_file:
 
         Termina sempre com uma frase de fecho forte, a incentivar o cliente a avançar para a formalização.
 
-        Tabela de dados (apenas campos essenciais, transposta para facilitar leitura):
-        {df_filtrado.T.to_string()}
+        Tabela de dados (transposta):
+        {df.T.to_string()}
         """
 
     if st.button("Obter análise IA"):
