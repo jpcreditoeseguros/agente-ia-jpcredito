@@ -20,7 +20,10 @@ if uploaded_file:
     st.write("Primeiras linhas do ficheiro:")
     st.write(df.head())
 
-    # Prompt dinâmico
+    # Prompt dinâmico e verificação da coluna "Situação Atual"
+    colunas = [col.lower() for col in df.columns]
+    tem_situacao_atual = any("situação atual" in col for col in colunas)
+
     if sheet.lower() == "dados":
         prompt = f"""
         Atua como um especialista em crédito habitação.
@@ -46,18 +49,36 @@ if uploaded_file:
                 "Mudar tipo de taxa"
             ]
         )
+        if tem_situacao_atual:
+            comparacao = """
+            Se existir uma coluna “Situação Atual”, trata-se de uma transferência de crédito habitação — deves:
+            - Realçar as melhorias e poupança gerada;
+            - Fazer comparação clara entre situação atual e nova(s) proposta(s);
+            - Destacar vantagens que o cliente vai sentir no dia a dia.
+            """
+        else:
+            comparacao = """
+            Neste caso, NÃO existe coluna “Situação Atual”, por isso NÃO faças qualquer referência a transferências, comparações com condições atuais, nem poupanças face ao passado.
+            O foco é analisar e defender as propostas como crédito habitação para compra, construção ou hipotecário novo.
+            """
+
         prompt = f"""
         Atua como um especialista em crédito habitação.
         O teu objetivo é analisar a folha 'Mapa comparativo' e ajudar o gestor a defender as várias propostas junto do cliente.
         Primeiro, considera que a principal dor do cliente é: **{dor_principal}**.
+
+        Dá especial atenção aos seguintes critérios técnicos em cada proposta:
+        - Montante de financiamento;
+        - Prazo do empréstimo;
+        - Prestação com seguros incluídos;
+        - Valores dos seguros, especificando se são contratados dentro ou fora do banco;
+        - Valor total dos custos associados com o processo de crédito.
+
         Com base nisto, deves:
         - Identificar a proposta mais vantajosa para a dor do cliente (p.ex. menor prestação, consolidação, retirar produtos obrigatórios, etc.);
         - Destacar benefícios claros e tangíveis da proposta escolhida;
         - Preparar argumentos de defesa para apresentar ao cliente, rebatendo objeções comuns.
-        Se existir uma coluna “Situação Atual”, trata-se de uma transferência de crédito habitação — deves:
-        - Realçar as melhorias e poupança gerada;
-        - Fazer comparação clara entre situação atual e nova(s) proposta(s);
-        - Destacar vantagens que o cliente vai sentir no dia a dia.
+        {comparacao}
         No final, sugere sempre uma frase de fecho para incentivar o cliente a avançar para a formalização.
         Usa linguagem simples, convincente e segura.
         Tabela de dados:
