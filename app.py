@@ -59,25 +59,27 @@ if uploaded_file:
             """
 
         prompt = f"""
-        Atua como um especialista em crédito habitação.
-        O teu objetivo é analisar tecnicamente a folha 'Mapa comparativo' e ajudar o gestor a defender as várias propostas junto do cliente, de forma clara, detalhada e objetiva.
-        Considera que a principal dor do cliente é: **{dor_principal}**.
+        Atua como um especialista em crédito habitação.  
+        Usa sempre os títulos exatos das colunas tal como aparecem na tabela.  
+        Para cada proposta apresentada, responde sempre indicando:
+        - Nome do banco (usa exatamente como está na tabela)
+        - Montante de financiamento proposto (usa o campo correspondente)
+        - Prazo do empréstimo (usa o campo correspondente)
+        - Prestação mensal **com seguros** (usa o campo correspondente ou soma “Prestação sem seguros” + “Seguros” se for esse o caso)
+        - Seguro de vida: valor e onde está contratado (diz sempre se é no banco ou fora, usando os campos exatos da tabela)
+        - Seguro multirriscos: valor e onde está contratado (idem)
+        - Valor total dos seguros (separando seguro de vida e multirriscos se possível)
+        - TAN bonificada (usa o campo correspondente)
+        - Tipo de taxa (usa o campo correspondente)
+        - Valor total dos custos associados com o crédito (usa exatamente o campo da tabela, exemplo: “Total de custos associados”)
+        - Qualquer outro campo relevante que conste na tabela para comparação
+        Se algum destes campos não existir na tabela, escreve “não consta na tabela”.
 
-        Para cada proposta apresentada na tabela, compara e realça de forma explícita e organizada os seguintes aspetos essenciais (se existirem na tabela):
-        - Nome do banco
-        - Montante de financiamento proposto
-        - Prazo do empréstimo
-        - Prestação mensal **com seguros**
-        - Valor total dos seguros (diz sempre se são contratados dentro do banco ou fora)
-        - TAN bonificada (Taxa Anual Nominal)
-        - Tipo de taxa (fixa, variável, mista, etc.)
-        - Valor total dos custos associados com o crédito (inclui todas as comissões, impostos, despesas processuais e outros encargos únicos)
-
-        Para cada um destes pontos, destaca as diferenças entre as propostas, apresentando de forma sintética os prós e contras de cada solução.
+        Apresenta sempre os valores tal como estão, sem arredondar ou alterar nomes de colunas.
 
         {comparacao}
 
-        No final, identifica qual a proposta mais vantajosa tendo em conta a dor do cliente, e prepara argumentos claros para defender essa solução junto do cliente, antecipando e rebatendo objeções comuns.
+        No final, identifica qual a proposta mais vantajosa para a dor do cliente, prepara argumentos claros para defender essa solução junto do cliente, antecipando e rebatendo objeções comuns.
 
         Termina sempre com uma frase de fecho forte, a incentivar o cliente a avançar para a formalização.
 
