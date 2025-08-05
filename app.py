@@ -20,7 +20,6 @@ if uploaded_file:
     st.write("Primeiras linhas do ficheiro:")
     st.write(df.head())
 
-    # Prompt dinâmico e verificação da coluna "Situação Atual"
     colunas = [col.lower() for col in df.columns]
     tem_situacao_atual = any("situação atual" in col for col in colunas)
 
@@ -49,38 +48,39 @@ if uploaded_file:
                 "Mudar tipo de taxa"
             ]
         )
+
         if tem_situacao_atual:
             comparacao = """
-            Se existir uma coluna “Situação Atual”, trata-se de uma transferência de crédito habitação — deves:
-            - Realçar as melhorias e poupança gerada;
-            - Fazer comparação clara entre situação atual e nova(s) proposta(s);
-            - Destacar vantagens que o cliente vai sentir no dia a dia.
+            Existe uma coluna “Situação Atual”, por isso deves comparar cada aspeto entre a proposta atual e as novas, e realçar as melhorias e a poupança gerada para o cliente.
             """
         else:
             comparacao = """
-            Neste caso, NÃO existe coluna “Situação Atual”, por isso NÃO faças qualquer referência a transferências, comparações com condições atuais, nem poupanças face ao passado.
-            O foco é analisar e defender as propostas como crédito habitação para compra, construção ou hipotecário novo.
+            Não existe coluna “Situação Atual”, por isso não faças referência a transferências. Foca-te em analisar as propostas como novas operações.
             """
 
         prompt = f"""
         Atua como um especialista em crédito habitação.
-        O teu objetivo é analisar a folha 'Mapa comparativo' e ajudar o gestor a defender as várias propostas junto do cliente.
-        Primeiro, considera que a principal dor do cliente é: **{dor_principal}**.
+        O teu objetivo é analisar tecnicamente a folha 'Mapa comparativo' e ajudar o gestor a defender as várias propostas junto do cliente, de forma clara, detalhada e objetiva.
+        Considera que a principal dor do cliente é: **{dor_principal}**.
 
-        Dá especial atenção aos seguintes critérios técnicos em cada proposta:
-        - Montante de financiamento;
-        - Prazo do empréstimo;
-        - Prestação com seguros incluídos;
-        - Valores dos seguros, especificando se são contratados dentro ou fora do banco;
-        - Valor total dos custos associados com o processo de crédito.
+        Para cada proposta apresentada na tabela, compara e realça de forma explícita e organizada os seguintes aspetos essenciais (se existirem na tabela):
+        - Nome do banco
+        - Montante de financiamento proposto
+        - Prazo do empréstimo
+        - Prestação mensal **com seguros**
+        - Valor total dos seguros (diz sempre se são contratados dentro do banco ou fora)
+        - TAN bonificada (Taxa Anual Nominal)
+        - Tipo de taxa (fixa, variável, mista, etc.)
+        - Valor total dos custos associados com o crédito (inclui todas as comissões, impostos, despesas processuais e outros encargos únicos)
 
-        Com base nisto, deves:
-        - Identificar a proposta mais vantajosa para a dor do cliente (p.ex. menor prestação, consolidação, retirar produtos obrigatórios, etc.);
-        - Destacar benefícios claros e tangíveis da proposta escolhida;
-        - Preparar argumentos de defesa para apresentar ao cliente, rebatendo objeções comuns.
+        Para cada um destes pontos, destaca as diferenças entre as propostas, apresentando de forma sintética os prós e contras de cada solução.
+
         {comparacao}
-        No final, sugere sempre uma frase de fecho para incentivar o cliente a avançar para a formalização.
-        Usa linguagem simples, convincente e segura.
+
+        No final, identifica qual a proposta mais vantajosa tendo em conta a dor do cliente, e prepara argumentos claros para defender essa solução junto do cliente, antecipando e rebatendo objeções comuns.
+
+        Termina sempre com uma frase de fecho forte, a incentivar o cliente a avançar para a formalização.
+
         Tabela de dados:
         {df.head(20).to_string(index=False)}
         """
