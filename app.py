@@ -30,7 +30,7 @@ if not st.session_state['processo']:
     )
     if st.button("Confirmar tipo de processo"):
         st.session_state['processo'] = processo
-        st.experimental_rerun()
+       st.rerun()
     st.stop()
 
 # 2. Se for transferência, pedir dados da situação atual
@@ -196,3 +196,4 @@ if st.session_state['propostas'] and st.session_state['dor']:
     st.write("Queres adicionar outra proposta? Preenche os campos acima e carrega em 'Adicionar proposta'.")
 else:
     st.info("Adiciona pelo menos uma proposta para análise e indica a principal dor do cliente para continuar.")
+
